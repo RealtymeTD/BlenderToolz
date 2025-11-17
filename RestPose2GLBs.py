@@ -49,7 +49,11 @@ else:
 
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global = True)
-    
+
+    # As they get to linger and get a .001, so annoying!
+    for action in bpy.data.actions:
+        bpy.data.actions.remove(action)
+
     next_file_name = tracker["not_done"][0]
     next_file_path = folder_path / next_file_name
     print(f"Processing: {next_file_name}")

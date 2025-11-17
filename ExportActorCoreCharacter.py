@@ -78,7 +78,7 @@ else:
     # Force delete! Because Blender loves to force issues, I think the name is 
     # based on what is selected when you press the bake
     for action in bpy.data.actions:
-        if action.name == "Armature|Action":
+        if action.name == "Action":
             continue
 
         if action.name == "Take_001":
@@ -105,6 +105,7 @@ else:
         bake_space_transform = True,
         use_space_transform = False,
         bake_anim_use_all_actions = True,
+        add_leaf_bones = False,
 
         # primary_bone_axis = "X",
         # secondary_bone_axis = "Y",
@@ -113,11 +114,11 @@ else:
     )
 
     # Update Tracker what files we've worked on so far
-    # tracker["imported"].remove(next_file_name)
-    # tracker["done"].append(next_file_name)
-    # tracker_file.write_text(json.dumps(tracker, indent = 4))
+    tracker["imported"].remove(next_file_name)
+    tracker["done"].append(next_file_name)
+    tracker_file.write_text(json.dumps(tracker, indent = 4))
 
-    # print(f"Exported {next_file_name}")
+    print(f"Exported {next_file_name}")
 
 # NOTES :
 """
