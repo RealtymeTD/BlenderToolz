@@ -6,7 +6,14 @@ import json
 """
     November 12, 2025
     Finally got the thing to work. Took all my patience, but now that WETA position
-    really looks like a possibility
+    really looks like a possibility!
+
+    Couple of days later, got it all figured out, the final processing gets done in 
+    Houdini so we can create the flipbook animation so we can quickly look at the 
+    animation in context. Took a minute, but finally got it done, and as of today
+    (November 21), I sent the Kama - Moto video to the official KShaka page on TikTok
+    and another funny thing, I was denied to post on the Kenya3D facebook page. LOL!
+    anyways 100 views on YouTube, 3 weeks after. LOL! 
 """
 
 # PROCESS
@@ -16,7 +23,7 @@ import json
 # Import the ActorCore Character
 
 
-GLB_FOLDER = "D:/Downloads/iClone_ActorCore/Fight_Stunts/Run_Batch"
+GLB_FOLDER = "D:\Downloads\iClone_ActorCore\Free_Fight\Blender"
 
 # ------
 
@@ -41,7 +48,9 @@ else:
     tracker_file.write_text(json.dumps(tracker, indent = 4 ) )
 
 if not tracker["not_done"]:
-    print("✅ All files processed!")
+    print("All files processed!")
+elif tracker["imported"]: # We have a previous export pending
+    print("First export the current animation")
 else:
     # Clean up first
     if bpy.context.object and bpy.context.object.mode != 'OBJECT':

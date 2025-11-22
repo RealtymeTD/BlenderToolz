@@ -98,8 +98,10 @@ else:
 
             break
 
+    fbxFile = next_file_name.replace("glb", "fbx")
+    fbxFile = fbxFile.replace("-", "_")
     bpy.ops.export_scene.fbx(
-        filepath = Path(folder_path/next_file_name.replace("glb", "fbx")  ).as_posix(),
+        filepath = Path(folder_path/fbxFile).as_posix(),
         use_selection = False,  # export all objects
         apply_scale_options = 'FBX_SCALE_ALL',
         bake_space_transform = True,
