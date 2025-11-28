@@ -2,6 +2,10 @@ import bpy
 import re
 from pathlib import Path
 import json
+import sys
+
+sys.path.append("C:/Python311/Lib/site-packages")
+from pygltflib import GLTF2
 
 """
     November 12, 2025
@@ -14,22 +18,80 @@ import json
     (November 21), I sent the Kama - Moto video to the official KShaka page on TikTok
     and another funny thing, I was denied to post on the Kenya3D facebook page. LOL!
     anyways 100 views on YouTube, 3 weeks after. LOL! 
+
+    November 28, 2025
+    Addd the auto frame, Haha! Getting smoother now! so we essentially get all the animation
+    lengths ahead of time and read them out when loading the file
 """
 
 # PROCESS
 # 1. Run the empties to bones command after importing so as to get the Armature
 
-
 # Import the ActorCore Character
 
-
-GLB_FOLDER = "D:\Downloads\iClone_ActorCore\Free_Fight\Blender"
+folder_to_process = "Light_Sabers"
 
 # ------
+
+GLB_FOLDER = f"D:/RipAndTear/RipperReallusion/Motions/{folder_to_process}/Blender"
 
 A_POSE = "D:/RealtymeFilmz/_CONSTANTS/BlenderToolz/Files/apose-533907.glb"
 
 DIRECTORY = "D:/RealtymeFilmz/_CONSTANTS/BlenderToolz/working_directory.txt"
+
+# Get the saved animation lengths and set the end range to that
+
+animationLengthsJson = f"{GLB_FOLDER}/animation_lengths.json"
+
+if not Path(animationLengthsJson).exists():
+    animationLengths = {}
+    for glb in Path(GLB_FOLDER).iterdir():
+        if glb.suffix == ".glb":
+            loadedGLB = GLTF2().load_binary(glb.as_posix() )
+
+            # Check if any animations exist
+            if not loadedGLB.animations:
+                print("ℹ️ No animations found in the GLB file.")
+                continue
+
+            # We will analyze the first animation (loadedGLB.animations[0])
+            animation = loadedGLB.animations[0]
+            
+            # 1. Find the accessor containing the time keyframes (input)
+            # The 'input' property of a channel sampler points to the accessor for time data.
+            if not animation.samplers:
+                print("ℹ️ First animation has no samplers (no data).")
+                continue
+                
+            # Get the accessor index from the first sampler's input
+            time_accessor_index = animation.samplers[0].input
+            
+            # 2. Retrieve the Accessor object
+            accessor = loadedGLB.accessors[time_accessor_index]
+            
+            # 3. Get the maximum time value (this is the duration)
+            # The glTF spec stores the max/min values directly on the accessor for efficiency.
+            # The maximum value array (max) contains [max_time]
+            
+            if accessor.max is None or len(accessor.max) == 0:
+                print("⚠️ Time accessor is missing max bounds, calculation skipped.")
+                continue
+                
+            duration = accessor.max[0]
+            
+            frameCount = int(duration * 30)
+            animationLengths[glb.name] = frameCount
+
+            # break
+
+
+    with open(f"{GLB_FOLDER}/animation_lengths.json", 'w') as writeJson:
+        json.dump(animationLengths, writeJson, indent = 2)
+
+    print("Saved the animations lengths to disk")
+else:
+    with open(animationLengthsJson) as readJson:
+        animationLengths = json.load(readJson)
 
 # Write out a file for our import and export so we just write the path once!
 folder = Path(__file__).parent
@@ -67,6 +129,9 @@ else:
     next_file_path = folder_path / next_file_name
     print(f"Processing: {next_file_name}")
 
+    # Set the frame range so we don't have to look for it
+    bpy.context.scene.frame_end = int(animationLengths[next_file_name])
+
     # Import GLB
     bpy.ops.import_scene.gltf( filepath = next_file_path.as_posix(), 
                                 directory = next_file_path.parent.as_posix(), 
@@ -76,7 +141,8 @@ else:
                                 guess_original_bind_pose = False,
                                 import_merge_material_slots = False,
                                 import_pack_images = False,
-                                merge_vertices = True )
+                                merge_vertices = True
+                                )
     
     # Update Tracker what files we've worked on so far
     tracker["not_done"].remove(next_file_name)
