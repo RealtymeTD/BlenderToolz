@@ -37,6 +37,8 @@ GLB_FOLDER = f"D:/RipAndTear/RipperReallusion/Motions/{folder_to_process}/Blende
 
 A_POSE = "D:/RealtymeFilmz/_CONSTANTS/BlenderToolz/Files/apose-533907.glb"
 
+# This is used by the export script to get the current working folder aka the 
+# folder_to_process
 DIRECTORY = "D:/RealtymeFilmz/_CONSTANTS/BlenderToolz/working_directory.txt"
 
 # Get the saved animation lengths and set the end range to that
