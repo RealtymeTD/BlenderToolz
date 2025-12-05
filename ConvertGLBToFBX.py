@@ -81,11 +81,22 @@ else:
     with open(animationLengthsJson) as readJson:
         animationLengths = json.load(readJson)
 
+folder_path = Path(GLB_FOLDER)
+tracker_file = folder_path / "file_tracker.json"
 
-for glb in Path(GLB_FOLDER).iterdir():
-    if glb.suffix != ".glb":
-        continue
+if tracker_file.exists():
+    tracker = json.loads(tracker_file.read_text())
+else:
+    # Scan folder for .glb files
+    all_files = [f.name for f in folder_path.glob("*.glb")]
+    tracker = {"not_done": all_files, "imported" : [], "done": []}
+    tracker_file.write_text(json.dumps(tracker, indent = 4 ) )
 
+if not tracker["not_done"]:
+    print("All files processed!")
+elif tracker["imported"]: # We have a previous export pending
+    print("First export the current animation")  
+else:
     # Clean up first
     if bpy.context.object and bpy.context.object.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -97,13 +108,17 @@ for glb in Path(GLB_FOLDER).iterdir():
     for action in bpy.data.actions:
         bpy.data.actions.remove(action)
 
-    # Set the frame range so we don't have to look for it
-    bpy.context.scene.frame_end = int(animationLengths[glb.name])
+    next_file_name = tracker["not_done"][0]
+    next_file_path = folder_path / next_file_name
+    print(f"Processing: {next_file_name}")
 
-    # Import 
-    bpy.ops.import_scene.gltf(  filepath = glb.as_posix(), 
-                                directory = glb.parent.as_posix(), 
-                                files = [{"name":glb.name, "name":glb.name}], 
+    # Set the frame range so we don't have to look for it
+    bpy.context.scene.frame_end = int(animationLengths[next_file_name])
+
+    # Import GLB
+    bpy.ops.import_scene.gltf( filepath = next_file_path.as_posix(), 
+                                directory = next_file_path.parent.as_posix(), 
+                                files = [{"name":next_file_name, "name":next_file_name}], 
                                 loglevel = 20, 
                                 disable_bone_shape = True,
                                 guess_original_bind_pose = False,
@@ -111,22 +126,71 @@ for glb in Path(GLB_FOLDER).iterdir():
                                 import_pack_images = False,
                                 merge_vertices = True
                                 )
+    
+    print(next_file_name)
+
+    # Update Tracker what files we've worked on so far
+    tracker["not_done"].remove(next_file_name)
+    tracker["imported"].append(next_file_name)
+    tracker_file.write_text(json.dumps(tracker, indent = 4))
 
 
-    fbxFile = glb.name.replace("glb", "fbx")
-    bpy.ops.export_scene.fbx(
-        filepath = Path(folder_path/fbxFile).as_posix(),
-        use_selection = False,  # export all objects
-        apply_scale_options = 'FBX_SCALE_ALL',
-        bake_space_transform = True,
-        use_space_transform = False,
-        bake_anim_use_all_actions = True,
-        add_leaf_bones = False,
 
-        # primary_bone_axis = "X",
-        # secondary_bone_axis = "Y",
-        axis_forward='Y', # Forward axis in your target app
-        axis_up='Z', 
-    )
 
-    # break
+
+
+
+
+
+
+
+# # Is not working, the export that is. Manual for now
+# for glb in Path(GLB_FOLDER).iterdir():
+#     if glb.suffix != ".glb":
+#         continue
+
+#     # Clean up first
+#     if bpy.context.object and bpy.context.object.mode != 'OBJECT':
+#         bpy.ops.object.mode_set(mode='OBJECT')
+
+#     bpy.ops.object.select_all(action='SELECT')
+#     bpy.ops.object.delete(use_global = True)
+
+#     # As they get to linger and get a .001, so annoying!
+#     for action in bpy.data.actions:
+#         bpy.data.actions.remove(action)
+
+#     # Set the frame range so we don't have to look for it
+#     bpy.context.scene.frame_end = int(animationLengths[glb.name])
+
+#     # Import 
+#     bpy.ops.import_scene.gltf(  filepath = glb.as_posix(), 
+#                                 directory = glb.parent.as_posix(), 
+#                                 files = [{"name":glb.name, "name":glb.name}], 
+#                                 loglevel = 20, 
+#                                 disable_bone_shape = True,
+#                                 guess_original_bind_pose = False,
+#                                 import_merge_material_slots = False,
+#                                 import_pack_images = False,
+#                                 merge_vertices = True
+#                                 )
+
+
+#     fbxFile = glb.name.replace("glb", "fbx")
+#     bpy.ops.export_scene.fbx(
+#         filepath = Path(folder_path/fbxFile).as_posix(),
+#         use_selection = False,  # export all objects
+#         apply_scale_options = 'FBX_SCALE_ALL',
+#         bake_space_transform = True,
+#         use_space_transform = False,
+#         bake_anim_use_all_actions = True,
+#         add_leaf_bones = False,
+#         use_armature_deform_only = True,
+
+#         # primary_bone_axis = "X",
+#         # secondary_bone_axis = "Y",
+#         axis_forward='-Y', # Forward axis in your target app
+#         axis_up='Z', 
+#     )
+
+#     break
